@@ -325,5 +325,18 @@ contract ParseCBORTest is Test {
         uint64 m = this.sliceUint64Bytes(bs, 0); // 0x01020304050600FF = 72623859790381311
         require(m == 72623859790381311, "unexpected uint64 sliced out");
     }
+    function sliceUint8Bytes(bytes calldata bs, uint start) external pure returns(uint8) {
+        return slice_uint8(bs, start);
+    }
+    function sliceUint16Bytes(bytes calldata bs, uint start) external pure returns(uint16) {
+        return slice_uint16(bs, start);
+    }
+    function sliceUint32Bytes(bytes calldata bs, uint start) external pure returns(uint32) {
+        return slice_uint32(bs, start);
+    }
+    function sliceUint64Bytes(bytes calldata bs, uint start) external pure returns(uint64) {
+        return slice_uint64(bs, start);
+    }
+    
     */
 }
