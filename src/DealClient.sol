@@ -88,7 +88,7 @@ contract DealClient {
     mapping(bytes => ProposalIdSet) public pieceToProposal; // commP -> dealProposalID
     mapping(bytes => ProviderSet) public pieceProviders; // commP -> provider
     mapping(bytes => uint64) public pieceDeals; // commP -> deal ID
-    DealRequest[] deals;
+    DealRequest[] public deals;
 
     event ReceivedDataCap(string received);
     event DealProposalCreate(bytes32 indexed id, uint64 size, bool indexed verified, uint256 price);
@@ -97,6 +97,22 @@ contract DealClient {
 
     constructor() {
         owner = msg.sender;
+    }
+
+    function getProviderSet(bytes calldata cid) public view returns (ProviderSet memory){
+      return pieceProviders[cid];
+    }
+
+    function getProposalIdSet(bytes calldata cid) public view returns (ProposalIdSet memory){
+      return pieceToProposal[cid];
+    }
+
+    function dealsLength() public view returns (uint256) {
+      return deals.length;
+    }
+
+    function getDealByIndex(uint256 index) public view returns (DealRequest memory){
+      return deals[index];
     }
 
     function makeDealProposal(DealRequest calldata deal) public {
@@ -168,17 +184,15 @@ contract DealClient {
         pieceDeals[proposal.piece_cid.data] = mdnp.dealId;
     }
 
-    // client - filecoin address byte format
-    function addBalance(CommonTypes.FilAddress memory client, uint256 value) public {
+    // addBalance funds the builtin storage market actor's escrow
+    // with funds from the contract's own balance
+    // @value - amount to be added in escrow in attoFIL
+    function addBalance(uint256 value) public {
         require(msg.sender == owner);
-
-        // TODO:: remove first arg
-        // change to ethAddr -> actorId and use that in the below API
-
-        MarketAPI.addBalance(client, value);
+        MarketAPI.addBalance(getDelegatedAddress(address(this)), value);
     }
 
-    // Below 2 funcs need to go to filecoin.sol
+    // TODO: Below 2 funcs need to go to filecoin.sol
     function uintToBigInt(uint256 value) internal view returns(CommonTypes.BigInt memory) {
         BigNumbers.BigNumber memory bigNumVal = BigNumbers.init(value, false);
         CommonTypes.BigInt memory bigIntVal = CommonTypes.BigInt(bigNumVal.val, bigNumVal.neg);
@@ -192,13 +206,14 @@ contract DealClient {
     }
 
 
-    function withdrawBalance(CommonTypes.FilAddress memory client, uint256 value) public returns(uint) {
-        // TODO:: remove first arg
-        // change to ethAddr -> actorId and use that in the below API
-
+    // This function attempts to withdraw the specified amount from the contract addr's escrow balance
+    // If less than the given amount is available, the full escrow balance is withdrawn
+    // @client - Eth address where the balance is withdrawn to. This can be the contract address or an external address
+    // @value - amount to be withdrawn in escrow in attoFIL
+    function withdrawBalance(address client, uint256 value) public returns(uint) {
         require(msg.sender == owner);
 
-        MarketTypes.WithdrawBalanceParams memory params = MarketTypes.WithdrawBalanceParams(client, uintToBigInt(value));
+        MarketTypes.WithdrawBalanceParams memory params = MarketTypes.WithdrawBalanceParams(getDelegatedAddress(client), uintToBigInt(value));
         CommonTypes.BigInt memory ret = MarketAPI.withdrawBalance(params);
 
         return bigIntToUint(ret);
