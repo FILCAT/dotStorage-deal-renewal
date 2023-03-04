@@ -25,11 +25,11 @@ contract DealClientStorageRenewal is DealClient {
         return verifiedSPs[actorId];
     }
 
-    function setVerifiedSP(CommonTypes.FilActorId actorId, bool status)
+    function addVerifiedSP(CommonTypes.FilActorId actorId)
         public
         onlyOwner
     {
-        verifiedSPs[actorId] = status;
+        verifiedSPs[actorId] = true;
     }
 
     function deleteSP(CommonTypes.FilActorId _actorID) public onlyOwner {
@@ -41,7 +41,7 @@ contract DealClientStorageRenewal is DealClient {
         for (uint256 i = 0; i < DEFAULT_VERIFIED_SPS.length; i++) {
             CommonTypes.FilActorId actorId =
                 CommonTypes.FilActorId.wrap(DEFAULT_VERIFIED_SPS[i]);
-            setVerifiedSP(actorId, true);
+            addVerifiedSP(actorId);
         }
     }
 
