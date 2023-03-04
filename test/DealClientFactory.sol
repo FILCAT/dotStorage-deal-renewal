@@ -10,6 +10,7 @@ contract DealClientFactoryTest is Test {
     uint64 piece_size;
     string location_ref;
     uint64 car_size;
+    bytes allowedParams =  hex"deadbeaf"; // placeholder
 
     function setUp() public {
         dealClientFactory = new DealClientFactory();
@@ -23,6 +24,11 @@ contract DealClientFactoryTest is Test {
         require(dealClientFactory.getDealClientLength() == 0, "Expect no deals");
         dealClientFactory.createDealRequest(testCID, piece_size, location_ref, car_size) ;
         require(dealClientFactory.getDealClientLength() == 1, "Expect one deal");
+    }
+
+    function testDealClientConfigAuthenticateMessage() public {
+        uint64 AUTHENTICATE_MESSAGE_METHOD_NUM = 2643134072;
+        dealClientFactory.getDealClient().handle_filecoin_method(AUTHENTICATE_MESSAGE_METHOD_NUM, 0, allowedParams);
     }
 
 }

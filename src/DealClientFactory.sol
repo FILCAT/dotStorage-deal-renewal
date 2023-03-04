@@ -1,5 +1,18 @@
 import "./DealClient.sol";
 
+
+contract DealClientConfig{
+    bytes allowedParams =  hex"deadbeaf"; // placeholder
+
+    function authenticateMessage(bytes calldata params) view external {
+        require( keccak256(params) == keccak256(allowedParams),"params not correct"); // check place holder
+
+        //AccountTypes.AuthenticateMessageParams memory amp = params.deserializeAuthenticateMessageParams();
+        //MarketTypes.DealProposal memory proposal = deserializeDealProposal(amp.message);
+        //require(pieceToProposal[proposal.piece_cid.data].valid, "piece cid must be added before authorizing");
+        //require(!pieceProviders[proposal.piece_cid.data].valid, "deal failed policy check: provider already claimed this cid");
+    }
+}
 contract DealClientFactory{
     DealClient public dealClient;
     int64 constant public START_EPOCH = 0;
@@ -8,9 +21,10 @@ contract DealClientFactory{
     bool constant public VERIFIED_DEAL = true;
     string constant public LABEL = "";
 
-    
     constructor() {
+        DealClientConfig dealClientConfig = new DealClientConfig();
         dealClient = new DealClient();
+        dealClient.setFileCoinFunctionMap( dealClient.AUTHENTICATE_MESSAGE_METHOD_NUM() , dealClientConfig.authenticateMessage);
     }
     
     function getDealClient() public view returns (DealClient){
