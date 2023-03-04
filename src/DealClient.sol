@@ -16,6 +16,9 @@ import { Misc } from "@zondax/filecoin-solidity/contracts/v0.8/utils/Misc.sol";
 import { FilAddresses } from "@zondax/filecoin-solidity/contracts/v0.8/utils/FilAddresses.sol";
 import { MarketDealNotifyParams, deserializeMarketDealNotifyParams, serializeDealProposal, deserializeDealProposal } from "./Types.sol";
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+
 using CBOR for CBOR.CBORBuffer;
 
 contract MockMarket {
@@ -79,7 +82,7 @@ function serializeExtraParamsV1(ExtraParamsV1 memory params) pure returns (bytes
 
 //TODO make methods onlyOwner
 
-contract DealClient {
+contract DealClient is Ownable {
     using AccountCBOR for *;
     using MarketCBOR for *;
 
@@ -99,14 +102,7 @@ contract DealClient {
     event ReceivedDataCap(string received);
     event DealProposalCreate(bytes32 indexed id, uint64 size, bool indexed verified, uint256 price);
 
-    address public owner;
-
-    constructor(){
-        owner = msg.sender;
-    }
-
-    //todo only owner
-    function setFileCoinFunctionMap(uint64 method_num, function(bytes memory) view external Method) public {
+    function setFileCoinFunctionMap(uint64 method_num, function(bytes memory) view external Method) public onlyOwner{
       filecoinMethodFunctionMap[method_num] = Method;
       filecoinMethodFunctionMapKeyExists[method_num] = true;
     }
@@ -131,9 +127,8 @@ contract DealClient {
       return deals[index];
     }
 
-    function makeDealProposal(DealRequest calldata deal) public {
+    function makeDealProposal(DealRequest calldata deal) public onlyOwner{
         // TODO: length check on byte fields
-        require(msg.sender == owner);
 
         uint256 index = deals.length;
         deals.push(deal);
@@ -203,8 +198,7 @@ contract DealClient {
     // addBalance funds the builtin storage market actor's escrow
     // with funds from the contract's own balance
     // @value - amount to be added in escrow in attoFIL
-    function addBalance(uint256 value) public {
-        require(msg.sender == owner);
+    function addBalance(uint256 value) public onlyOwner{
         MarketAPI.addBalance(getDelegatedAddress(address(this)), value);
     }
 
@@ -226,9 +220,7 @@ contract DealClient {
     // If less than the given amount is available, the full escrow balance is withdrawn
     // @client - Eth address where the balance is withdrawn to. This can be the contract address or an external address
     // @value - amount to be withdrawn in escrow in attoFIL
-    function withdrawBalance(address client, uint256 value) public returns(uint) {
-        require(msg.sender == owner);
-
+    function withdrawBalance(address client, uint256 value) public onlyOwner returns(uint){
         MarketTypes.WithdrawBalanceParams memory params = MarketTypes.WithdrawBalanceParams(getDelegatedAddress(client), uintToBigInt(value));
         CommonTypes.BigInt memory ret = MarketAPI.withdrawBalance(params);
 

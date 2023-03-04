@@ -1,1 +1,2 @@
 @zondax/=node_modules/@zondax/
+@openzeppelin/=node_modules/@openzeppelin
