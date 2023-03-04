@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/DealClientFactory.sol";
+import "../src/DealClientStorageRenewal.sol";
 
-contract DealClientFactoryTest is Test {
-    DealClientFactory public dealClientFactory;
+contract DealClientStorageRenewalTest is Test {
+    DealClientStorageRenewal public dealClient;
     bytes testCID;
     uint64 piece_size;
     string location_ref;
@@ -13,7 +13,7 @@ contract DealClientFactoryTest is Test {
     bytes allowedParams =  hex"deadbeaf"; // placeholder
 
     function setUp() public {
-        dealClientFactory = new DealClientFactory();
+        dealClient = new DealClientStorageRenewal();
         testCID = hex"000181E2039220206B86B273FF34FCE19D6B804EFF5A3F5747ADA4EAA22F1D49C01E52DDB7875B4B";
         piece_size = 1337;
         car_size = 1337337;
@@ -21,14 +21,14 @@ contract DealClientFactoryTest is Test {
     }
 
     function testMakeDealProposal() public {
-        require(dealClientFactory.getDealClientLength() == 0, "Expect no deals");
-        dealClientFactory.createDealRequest(testCID, piece_size, location_ref, car_size) ;
-        require(dealClientFactory.getDealClientLength() == 1, "Expect one deal");
+        require(dealClient.dealsLength() == 0, "Expect no deals");
+        dealClient.createDealRequest(testCID, piece_size, location_ref, car_size) ;
+        require(dealClient.dealsLength() == 1, "Expect one deal");
     }
 
     function testDealClientConfigAuthenticateMessage() public {
         uint64 AUTHENTICATE_MESSAGE_METHOD_NUM = 2643134072;
-        dealClientFactory.getDealClient().handle_filecoin_method(AUTHENTICATE_MESSAGE_METHOD_NUM, 0, allowedParams);
+        dealClient.handle_filecoin_method(AUTHENTICATE_MESSAGE_METHOD_NUM, 0, allowedParams);
     }
 
 }

@@ -90,8 +90,6 @@ contract DealClient is Ownable {
     uint64 constant public DATACAP_RECEIVER_HOOK_METHOD_NUM = 3726118371;
     uint64 constant public MARKET_NOTIFY_DEAL_METHOD_NUM = 4186741094;
 
-    mapping(uint64 => function(bytes memory ) view external) internal filecoinMethodFunctionMap;
-    mapping(uint64 => bool) internal filecoinMethodFunctionMapKeyExists;
 
     mapping(bytes32 => uint256) public dealProposals; // contract deal id -> deal index
     mapping(bytes => ProposalIdSet) public pieceToProposal; // commP -> dealProposalID
@@ -101,15 +99,6 @@ contract DealClient is Ownable {
 
     event ReceivedDataCap(string received);
     event DealProposalCreate(bytes32 indexed id, uint64 size, bool indexed verified, uint256 price);
-
-    function setFileCoinFunctionMap(uint64 method_num, function(bytes memory) view external Method) public onlyOwner{
-      filecoinMethodFunctionMap[method_num] = Method;
-      filecoinMethodFunctionMapKeyExists[method_num] = true;
-    }
-
-    function fileCoinFunctionMapContainsKey(uint64 key) public view returns (bool) {
-        return filecoinMethodFunctionMapKeyExists[key];
-    }
 
     function getProviderSet(bytes calldata cid) public view returns (ProviderSet memory){
       return pieceProviders[cid];
@@ -127,7 +116,7 @@ contract DealClient is Ownable {
       return deals[index];
     }
 
-    function makeDealProposal(DealRequest calldata deal) public onlyOwner{
+    function makeDealProposal(DealRequest memory deal) public onlyOwner{
         // TODO: length check on byte fields
 
         uint256 index = deals.length;
@@ -176,7 +165,7 @@ contract DealClient is Ownable {
         return serializeExtraParamsV1(deal.extra_params);
     }
 
-    function authenticateMessage(bytes memory params) view internal {
+    function authenticateMessage(bytes memory params) view internal virtual{
         AccountTypes.AuthenticateMessageParams memory amp = params.deserializeAuthenticateMessageParams();
         MarketTypes.DealProposal memory proposal = deserializeDealProposal(amp.message);
 
@@ -247,24 +236,20 @@ contract DealClient is Ownable {
         bytes memory ret;
         uint64 codec;
         // dispatch methods
-        if(fileCoinFunctionMapContainsKey(method)){
-          filecoinMethodFunctionMap[method](params);
-        }else{
-          if (method == AUTHENTICATE_MESSAGE_METHOD_NUM) {
-              authenticateMessage(params);
-              // If we haven't reverted, we should return a CBOR true to indicate that verification passed.
-              CBOR.CBORBuffer memory buf = CBOR.create(1);
-              buf.writeBool(true);
-              ret = buf.data();
-              codec = Misc.CBOR_CODEC;
-          } else if (method == MARKET_NOTIFY_DEAL_METHOD_NUM) {
-              dealNotify(params);
-          } else if (method == DATACAP_RECEIVER_HOOK_METHOD_NUM) {
-              receiveDataCap(params);
-          } else {
-              revert("the filecoin method that was called is not handled");
-          }
+        if (method == AUTHENTICATE_MESSAGE_METHOD_NUM) {
+            authenticateMessage(params);
+            // If we haven't reverted, we should return a CBOR true to indicate that verification passed.
+            CBOR.CBORBuffer memory buf = CBOR.create(1);
+            buf.writeBool(true);
+            ret = buf.data();
+            codec = Misc.CBOR_CODEC;
+        } else if (method == MARKET_NOTIFY_DEAL_METHOD_NUM) {
+            dealNotify(params);
+        } else if (method == DATACAP_RECEIVER_HOOK_METHOD_NUM) {
+            receiveDataCap(params);
+        } else {
+            revert("the filecoin method that was called is not handled");
         }
         return (0, codec, ret);
-    }
+  }
 }
