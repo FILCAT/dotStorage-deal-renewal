@@ -34,7 +34,7 @@ If you build an extension to this MVP contract this repo hopes to be a good home
 ### Compile to hyperspace
 
 ```
-forge create --rpc-url https://api.hyperspace.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY src/DealClient.sol:DealClient
+forge create --rpc-url https://api.hyperspace.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY src/DealClientStorageRenewal.sol:DealClientStorageRenewal
 ```
 
 ## Core Idea
