@@ -21,6 +21,28 @@ contract DealClientStorageRenewalTest is Test {
         location_ref = "http://localhost/file.car";
     }
 
+    function testCreateDealRequests() public {
+        uint len = 4;
+        bytes[] memory CIDs = new bytes[](len);
+        uint64[] memory piece_sizes = new uint64[](len);
+        string[] memory location_refs = new string[](len);
+        uint64[] memory car_sizes = new uint64[](len);
+        for (uint i = 0; i < len; i++) {
+            CIDs[i] = testCID;
+            piece_sizes[i] = piece_size;
+            location_refs[i] = location_ref;
+            car_sizes[i] = car_size;
+        }
+
+        DealRequest[] memory output = dealClient.createDealRequests(
+            CIDs,
+            piece_sizes,
+            location_refs,
+            car_sizes
+        );
+        assert(output.length == 4);
+    }
+
     function testValid() public {
         dealClient.createDealRequest(
             testCID,

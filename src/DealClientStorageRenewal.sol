@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.17;
+
 import "./DealClient.sol";
 import {CommonTypes} from "@zondax/filecoin-solidity/contracts/v0.8/types/CommonTypes.sol";
 
@@ -63,6 +66,36 @@ contract DealClientStorageRenewal is DealClient {
         //MarketTypes.DealProposal memory proposal = deserializeDealProposal(amp.message);
         //require(pieceToProposal[proposal.piece_cid.data].valid, "piece cid must be added before authorizing");
         //require(!pieceProviders[proposal.piece_cid.data].valid, "deal failed policy check: provider already claimed this cid");
+    }
+
+    function createDealRequests(
+        bytes[] memory CIDs,
+        uint64[] memory piece_sizes,
+        string[] memory location_refs,
+        uint64[] memory car_sizes
+    ) public returns (DealRequest[] memory) {
+        //ensure all arrays have same length
+        uint len = CIDs.length;
+        require(
+            len == piece_sizes.length,
+            "Piece sizes length not equal to CIDs"
+        );
+        require(
+            len == location_refs.length,
+            "Location Refs length not equal to CIDs"
+        );
+        require(len == car_sizes.length, "Car Sizes length not equal to CIDs");
+        DealRequest[] memory ret = new DealRequest[](len);
+        //loop through requests and call createDealRequest
+        for (uint256 i = 0; i < CIDs.length; i++) {
+            ret[i] = createDealRequest(
+                CIDs[i],
+                piece_sizes[i],
+                location_refs[i],
+                car_sizes[i]
+            );
+        }
+        return ret;
     }
 
     function createDealRequest(
