@@ -4,4 +4,6 @@ out = 'out'
 libs = ['lib']
 [profile.default.optimizer_details]
 yul = false
+optimizer = true
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
