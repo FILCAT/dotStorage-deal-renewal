@@ -3,8 +3,9 @@ import uuid
 import time
 import os
 import json
+
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
-abi_json = "out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
+abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
 try:
     abi = json.load(open(abi_json))['abi']
     bytecode = json.load(open(abi_json))['bytecode']['object']
@@ -14,10 +15,8 @@ except Exception:
 
 PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
 
-address = "0x625Bd54897F23ceB99114F3d1acD439A4515C6F6"
+address = "0x6f50BA62BEafFE18145ef221ABf6D0A81B77f25D"
 curBlock = w3.eth.get_block('latest')
-print(curBlock)
-
 
 
 def getTxInfo():
@@ -47,6 +46,9 @@ def isVerified(actorId):
     contract = getContract()
     return contract.functions.isVerifiedSP(actorId).call()
 
+def getSPs():
+    contract = getContract()
+    return contract.functions.verifiedSPs().call()
 
 
 def testVerified():
@@ -80,6 +82,6 @@ def testAddRandomSP():
     is_v = isVerified(actor_id)
     assert(is_v)
 
-testAddRandomSP()
 
 #deploy()
+#testAddRandomSP()
