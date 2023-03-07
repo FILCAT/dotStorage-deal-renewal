@@ -253,7 +253,7 @@ contract DealClient is Ownable {
     // addBalance funds the builtin storage market actor's escrow
     // with funds from the contract's own balance
     // @value - amount to be added in escrow in attoFIL
-    function addBalance(uint256 value) public onlyOwner {
+    function addBalance(uint256 value) public virtual onlyOwner {
         MarketAPI.addBalance(getDelegatedAddress(address(this)), value);
     }
 
@@ -287,7 +287,7 @@ contract DealClient is Ownable {
     function withdrawBalance(
         address client,
         uint256 value
-    ) public onlyOwner returns (uint) {
+    ) public virtual onlyOwner returns (uint) {
         MarketTypes.WithdrawBalanceParams memory params = MarketTypes
             .WithdrawBalanceParams(
                 getDelegatedAddress(client),
