@@ -17,7 +17,6 @@ import {MarketDealNotifyParams, deserializeMarketDealNotifyParams, serializeDeal
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-
 using CBOR for CBOR.CBORBuffer;
 
 struct ProposalIdSet {
@@ -73,7 +72,6 @@ function serializeExtraParamsV1(
     return buf.data();
 }
 
-
 //TODO make methods onlyOwner
 
 contract DealClient is Ownable {
@@ -126,7 +124,7 @@ contract DealClient is Ownable {
 
     function makeDealProposal(
         DealRequest memory deal
-    ) public returns (bytes32) onlyOwner {
+    ) public onlyOwner returns (bytes32) {
         // TODO: length check on byte fields
 
         uint256 index = deals.length;
@@ -200,7 +198,7 @@ contract DealClient is Ownable {
         return serializeExtraParamsV1(deal.extra_params);
     }
 
-    function authenticateMessage(bytes memory params) internal view virtual{
+    function authenticateMessage(bytes memory params) internal view virtual {
         require(
             msg.sender == MARKET_ACTOR_ETH_ADDRESS,
             "msg.sender needs to be market actor f05"
@@ -255,7 +253,7 @@ contract DealClient is Ownable {
     // addBalance funds the builtin storage market actor's escrow
     // with funds from the contract's own balance
     // @value - amount to be added in escrow in attoFIL
-    function addBalance(uint256 value) public onlyOwner{
+    function addBalance(uint256 value) public onlyOwner {
         MarketAPI.addBalance(getDelegatedAddress(address(this)), value);
     }
 
@@ -290,7 +288,6 @@ contract DealClient is Ownable {
         address client,
         uint256 value
     ) public onlyOwner returns (uint) {
-
         MarketTypes.WithdrawBalanceParams memory params = MarketTypes
             .WithdrawBalanceParams(
                 getDelegatedAddress(client),
@@ -333,5 +330,5 @@ contract DealClient is Ownable {
             revert("the filecoin method that was called is not handled");
         }
         return (0, codec, ret);
-  }
+    }
 }
