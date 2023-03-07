@@ -37,6 +37,15 @@ If you build an extension to this MVP contract this repo hopes to be a good home
 forge create --rpc-url https://api.hyperspace.node.glif.io/rpc/v1 --private-key $PRIVATE_KEY src/DealClientStorageRenewal.sol:DealClientStorageRenewal
 ```
 
+### Compile a merged solidity file
+
+It may be helpful to have a single file with all of the libraries and imports merged together. You can do this with:
+
+```
+npm install -g sol-merger
+sol-merger --remove-comments src/DealClientStorageRenewal.sol
+```
+
 ## Core Idea
 
 With [FIP 44](https://github.com/filecoin-project/FIPs/blob/master/FIPS/fip-0044.md) landing in nv17 the builtin storage market actor can delegate authorization of a deal proposal to an arbitrary fvm contract.  This allows any filecoin contract to act as a client of the storage market.  This hook is enough to get a long way towards supporting data DAOs and other programmable storage projects.  While we expect more powerful builtin actors APIs to exist in the near future which will further expand the set of supported functionalities, the builtin market interface has the advantage of existing today.
