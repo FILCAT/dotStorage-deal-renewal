@@ -42,9 +42,10 @@ def getContract():
     contract = ContractFactory(address)
     return contract
 
-def isVerified(actorId):
+def isVerified(actorid):
+    actorid = int(actorid)
     contract = getContract()
-    return contract.functions.isVerifiedSP(actorId).call()
+    return contract.functions.isVerifiedSP(actorid).call()
 
 def getSPs():
     contract = getContract()
@@ -65,6 +66,24 @@ def wait(blockNumber):
         if curBlock.number - blockNumber > wait_block_count:
             return
         time.sleep(1)
+
+def deleteSP(actor_id):
+    actor_id = int(actor_id)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.deleteSP(actor_id).buildTransaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
+
+def addVerifiedSP(actor_id):
+    actor_id = int(actor_id)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.addVerifiedSP(actor_id).buildTransaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
     
 def testAddRandomSP():
     actor_id = uuid.uuid1().int>>64
@@ -72,12 +91,8 @@ def testAddRandomSP():
     is_v = isVerified(actor_id)
     assert(not is_v)
     print("Actor is not verified. Adding actor to verfied SP list")
+    addVerifiedSP(actor_id)
 
-    contract = getContract()
-    tx_info = getTxInfo()
-    tx_receipt = sendTx(contract.functions.addVerifiedSP(actor_id).buildTransaction(tx_info))
-    print("wait for confirmations")
-    wait(tx_receipt.blockNumber)
     print("test the new actor is verified")
     is_v = isVerified(actor_id)
     assert(is_v)
