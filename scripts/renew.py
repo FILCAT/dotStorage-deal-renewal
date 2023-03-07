@@ -67,6 +67,17 @@ def wait(blockNumber):
             return
         time.sleep(1)
 
+def createDealRequest(cid, piece_size, location_ref, car_size):
+    piece_size = int(piece_size)
+    car_size = int(car_size)
+    CID = bytes(cid, 'utf-8')
+    location_ref = str(location_ref)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.createDealRequest(CID, piece_size, location_ref, car_size).buildTransaction(tx_info))
+    wait(tx_receipt.blockNumber)
+    return tx_receipt
+
 def deleteSP(actor_id):
     actor_id = int(actor_id)
     contract = getContract()

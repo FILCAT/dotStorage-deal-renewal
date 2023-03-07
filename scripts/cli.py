@@ -2,7 +2,10 @@
 import instantcli
 import renew
 import json
-instantcli.post_call = lambda result: print(json.dumps(result, default=lambda x: x.to_dict()))
+def printme(result):
+    print(result)
+
+instantcli.post_call = printme
 
 instantcli.load_module( renew)
 instantcli.cli()
