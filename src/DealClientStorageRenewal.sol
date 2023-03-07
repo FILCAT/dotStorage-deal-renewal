@@ -17,6 +17,16 @@ contract DealClientStorageRenewal is DealClient {
         setDefaultVerifiedSPs();
     }
 
+
+    function isVerifiedSPUint64(uint64 actorId)
+        public
+        view
+        returns (bool)
+    {
+        CommonTypes.FilActorId a = CommonTypes.FilActorId.wrap(actorId);
+        return isVerifiedSP(a);
+    }
+
     function isVerifiedSP(CommonTypes.FilActorId actorId)
         public
         view

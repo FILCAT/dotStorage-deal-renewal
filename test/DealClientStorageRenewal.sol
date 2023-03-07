@@ -21,6 +21,12 @@ contract DealClientStorageRenewalTest is Test {
         location_ref = "http://localhost/file.car";
     }
 
+    function testValid() public {
+        dealClient.createDealRequest(testCID, piece_size, location_ref, car_size) ;
+        require(dealClient.dealsLength() == 1, "Expect one deal");
+    }
+
+
     function testMakeDealProposal() public {
         require(dealClient.dealsLength() == 0, "Expect no deals");
         dealClient.createDealRequest(testCID, piece_size, location_ref, car_size) ;
@@ -50,6 +56,19 @@ contract DealClientStorageRenewalTest is Test {
         require(!dealClient.isVerifiedSP(CommonTypes.FilActorId.wrap(actorId)));
     }
 
+    function testDefaultActorIdsUint64() public {
+      uint64 x = 4;
+      require(dealClient.isVerifiedSPUint64(x));
+      require(dealClient.isVerifiedSPUint64(x+1));
+      require(dealClient.isVerifiedSPUint64(x+2));
+    }
+
+    function testInvalidActorIdUint64(uint64 actorId) public {
+        vm.assume(actorId != 4);
+        vm.assume(actorId != 5);
+        vm.assume(actorId != 6);
+        require(!dealClient.isVerifiedSPUint64(actorId));
+    }
 
     function testAddRemoveActorIds() public {
         CommonTypes.FilActorId actorId = CommonTypes.FilActorId.wrap(1111);
