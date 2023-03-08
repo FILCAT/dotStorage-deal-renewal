@@ -43,6 +43,17 @@ contract DealClientStorageRenewalTest is Test {
         assert(output.length == 4);
     }
 
+    function testDealRequestCID() public {
+        dealClient.createDealRequest(
+            testCID,
+            piece_size,
+            location_ref,
+            car_size
+        );
+        bytes memory dealCID = dealClient.getDealByIndex(0).piece_cid;
+        require(keccak256(testCID) == keccak256(dealCID), string(dealCID));
+    }
+
     function testValid() public {
         dealClient.createDealRequest(
             testCID,
