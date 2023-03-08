@@ -1,14 +1,23 @@
+import asyncio
 from web3 import Web3
+import binascii
+import subprocess
+from cid import make_cid
 import csv
+import time
+import sys
 import json
 import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0x7f5D723287569d4e0B9e3A93f8306Acb665F02b1"
+DealClientStorageRenewalAddress = "0x85F37279bc17CF5BCD50A6B682AFda75567320c1"
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
+
+w3wss_url = 'wss://wss.hyperspace.node.glif.io/apigw/lotus/rpc/v1'
+
 try:
     abi = json.load(open(abi_json))['abi']
     bytecode = json.load(open(abi_json))['bytecode']['object']
@@ -21,6 +30,38 @@ PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
 curBlock = w3.eth.get_block('latest')
 
 
+def listenEvents():
+    def handle_event(event):
+        print(event.args.id)
+        print( getContract().functions.getDealProposal(event.args.id).call())
+        #print(event)
+
+    w3wss = Web3(Web3.WebsocketProvider(w3wss_url))
+    ContractFactory = w3wss.eth.contract(abi=abi)
+    wscontract = ContractFactory(DealClientStorageRenewalAddress)
+    latest = w3.eth.get_block('latest').number 
+    oldestBlock =  latest - 30480
+    while True:
+        event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock=oldestBlock, toBlock=latest)
+        for event in event_filter.get_new_entries():
+            handle_event(event)
+        oldestBlock = latest
+        latest = w3.eth.get_block('latest').number 
+        time.sleep(1)
+
+    
+
+def getCID(cid):
+    # Call the Go program to reverse the input string
+    process = subprocess.Popen(['./cidbytes', cid], stdout=subprocess.PIPE)
+    output = process.communicate()[0].decode('utf-8').strip()
+    #convert from [ 2 3 4 5] to [2,3,4,5] and parse with json.loads
+    output = output.replace(" ", ",")
+    ret_cid = bytes(json.loads(output))
+    ret_cid = bytes([0]) + ret_cid
+    print(''.join(format(x, '02x') for x in ret_cid))
+    return ret_cid
+
 def getTxInfo():
     return { 'from': PA.address,
             'nonce': w3.eth.get_transaction_count(PA.address)}
@@ -28,7 +69,8 @@ def getTxInfo():
 def sendTx(tx):
     tx['maxPriorityFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
     tx['maxFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
-    tx_create = w3.eth.account.sign_transaction(tx, PA.privateKey)
+    print(tx)
+    tx_create = w3.eth.account.sign_transaction(tx, PA._private_key)
     tx_hash = w3.eth.send_raw_transaction(tx_create.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -36,7 +78,7 @@ def sendTx(tx):
 def deploy():
     DealClientStorageRenewal = w3.eth.contract(abi=abi, bytecode=bytecode)
     tx_info = getTxInfo()
-    construct_txn = DealClientStorageRenewal.constructor().buildTransaction(tx_info)
+    construct_txn = DealClientStorageRenewal.constructor().build_transaction(tx_info)
     tx_receipt = sendTx(construct_txn)
     print(f'Contract deployed at address: { tx_receipt.contractAddress }')
 
@@ -51,9 +93,6 @@ def isVerified(actorid):
     contract = getContract()
     return contract.functions.isVerifiedSP(actorid).call()
 
-def getSPs():
-    contract = getContract()
-    return contract.functions.verifiedSPs().call()
 
 def submitcsvbatch(csv_filename):
     with open(csv_filename, newline='') as csvfile:
@@ -76,7 +115,6 @@ def submitcsv(csv_filename):
     with open(csv_filename, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            print(row)
             cid = row['piece_cid']
             piece_size = row['piece_size']
             location_ref = row['signed_url']
@@ -100,26 +138,28 @@ def wait(blockNumber):
         time.sleep(1)
 
 def createDealRequests(cids, piece_sizes, location_refs, car_sizes):
-    CIDs = [bytes(cid, 'ascii') for cid in cids ]
+    CIDs = [getCID(cid) for cid in cids ]
     piece_sizes = [int(piece_size) for piece_size in piece_sizes ]
     car_sizes = [int(car_size) for car_size in car_sizes ]
     location_refs = [str(location_ref) for location_ref in location_refs]
     contract = getContract()
     tx_info = getTxInfo()
-    tx = contract.functions.createDealRequests(CIDs, piece_sizes, location_refs, car_sizes).buildTransaction(tx_info)
+    tx = contract.functions.createDealRequests(CIDs, piece_sizes, location_refs, car_sizes).build_transaction(tx_info)
     tx_receipt = sendTx(tx)
     wait(tx_receipt.blockNumber)
     return tx_receipt
 
 
 def createDealRequest(cid, piece_size, location_ref, car_size):
-    CID = bytes(cid, 'ascii')
+    CID = getCID(cid)
+    print("cid ", cid)
+    print("CID ", CID)
     piece_size = int(piece_size)
     car_size = int(car_size)
     location_ref = str(location_ref)
     contract = getContract()
     tx_info = getTxInfo()
-    tx = contract.functions.createDealRequest(CID, piece_size, location_ref, car_size).buildTransaction(tx_info)
+    tx = contract.functions.createDealRequest(CID, piece_size, location_ref, car_size).build_transaction(tx_info)
     tx_receipt = sendTx(tx)
     wait(tx_receipt.blockNumber)
     return tx_receipt
@@ -128,7 +168,7 @@ def deleteSP(actor_id):
     actor_id = int(actor_id)
     contract = getContract()
     tx_info = getTxInfo()
-    tx_receipt = sendTx(contract.functions.deleteSP(actor_id).buildTransaction(tx_info))
+    tx_receipt = sendTx(contract.functions.deleteSP(actor_id).build_transaction(tx_info))
     print("wait for confirmations")
     wait(tx_receipt.blockNumber)
     return True
@@ -137,7 +177,7 @@ def addVerifiedSP(actor_id):
     actor_id = int(actor_id)
     contract = getContract()
     tx_info = getTxInfo()
-    tx_receipt = sendTx(contract.functions.addVerifiedSP(actor_id).buildTransaction(tx_info))
+    tx_receipt = sendTx(contract.functions.addVerifiedSP(actor_id).build_transaction(tx_info))
     print("wait for confirmations")
     wait(tx_receipt.blockNumber)
     return True
