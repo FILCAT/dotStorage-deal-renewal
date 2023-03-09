@@ -11,7 +11,7 @@ import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0x85F37279bc17CF5BCD50A6B682AFda75567320c1"
+DealClientStorageRenewalAddress = "0xF76774f6DB547BeeAdBcD63c8740896B3C421319"
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
@@ -29,11 +29,15 @@ PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
 
 curBlock = w3.eth.get_block('latest')
 
+def getDeal():
+    _id = b"\x05\xe3\xaf\x994\x10'\x9a\xc5\xe5\xaf+\xc6\t\xbf\x11\xf2\xc7\xdfZ\x89mW\x9c5\x03LBn\xc6\xe2\x19"
+    print( getContract().functions.getDealRequestPub(_id).call())
+    return getContract().functions.getDealRequestPub(_id).call()
 
 def listenEvents():
     def handle_event(event):
         print(event.args.id)
-        print( getContract().functions.getDealProposal(event.args.id).call())
+        print( getContract().functions.getDealRequestPub(event.args.id).call())
         #print(event)
 
     w3wss = Web3(Web3.WebsocketProvider(w3wss_url))
@@ -41,12 +45,13 @@ def listenEvents():
     wscontract = ContractFactory(DealClientStorageRenewalAddress)
     latest = w3.eth.get_block('latest').number 
     oldestBlock =  latest - 30480
+    event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock=oldestBlock, toBlock=latest)
+    for event in event_filter.get_new_entries():
+        handle_event(event)
+    event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock="latest")
     while True:
-        event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock=oldestBlock, toBlock=latest)
         for event in event_filter.get_new_entries():
             handle_event(event)
-        oldestBlock = latest
-        latest = w3.eth.get_block('latest').number 
         time.sleep(1)
 
     

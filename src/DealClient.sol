@@ -149,6 +149,12 @@ contract DealClient is Ownable {
         return id;
     }
 
+    function getDealRequestPub(
+        bytes32 proposalId
+    ) public view returns (DealRequest memory) {
+        return getDealRequest(proposalId);
+    }
+
     // helper function to get deal request based from id
     function getDealRequest(
         bytes32 proposalId
