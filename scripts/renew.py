@@ -11,7 +11,7 @@ import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0xbc58b1F4BfC560F9ceB10E487A9c4B9d0ABE1d62"
+DealClientStorageRenewalAddress = "0x7F30bd7ABd4E55130Fd1c213f8192F661746FD31"
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
@@ -57,6 +57,8 @@ def listenEvents():
     
 
 def getCID(cid):
+    #return bytes("bafk2bzaceanzppnlffioby4nac2hhjmrstzntqie3oid4ovq6zu4qhhjs4bvy", 'ascii')
+    #return b'\x01\x81\xe2\x03\x92  \x05@\x88\xfbI\xe2/\xda7\xd3\t\rK\x17\xbe\x87\xae\xabp\xba\xc5\x8b=w\x95E\x12h\x11\x80=%'
     # Call the Go program to reverse the input string
     process = subprocess.Popen(['./cidbytes', cid], stdout=subprocess.PIPE)
     output = process.communicate()[0].decode('utf-8').strip()

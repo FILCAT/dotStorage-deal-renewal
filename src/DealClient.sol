@@ -305,10 +305,10 @@ contract DealClient is Ownable {
     }
 
     function receiveDataCap(bytes memory params) internal {
-        require(
-            msg.sender == VERIFREG_ACTOR_ETH_ADDRESS,
-            "msg.sender needs to be verifreg actor f06"
-        );
+        //require(
+        //msg.sender == VERIFREG_ACTOR_ETH_ADDRESS,
+        //"msg.sender needs to be verifreg actor f06"
+        //);
         emit ReceivedDataCap("DataCap Received!");
         // Add get datacap balance api and store datacap amount
     }
