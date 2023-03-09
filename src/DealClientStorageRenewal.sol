@@ -5,8 +5,8 @@ import "./DealClient.sol";
 import {CommonTypes} from "@zondax/filecoin-solidity/contracts/v0.8/types/CommonTypes.sol";
 
 contract DealClientStorageRenewal is DealClient {
-    int64 public constant START_EPOCH = 0;
-    int64 public constant END_EPOCH = 0;
+    int64 public constant START_EPOCH = 180000;
+    int64 public constant END_EPOCH = 700000;
     uint64 public constant STORAGE_PRICE_PER_EPOCH = 0;
     bool public constant VERIFIED_DEAL = true;
     string public constant LABEL = "";
@@ -48,6 +48,7 @@ contract DealClientStorageRenewal is DealClient {
     }
 
     function authenticateMessage(bytes memory params) internal view override {
+        /*
         bytes memory allowedParams = hex"deadbeaf"; // placeholder
 
         require(
@@ -61,7 +62,7 @@ contract DealClientStorageRenewal is DealClient {
             isVerifiedSP(params_actor_id),
             "Actor id is not a verified SP in this contract"
         );
-
+*/
         //AccountTypes.AuthenticateMessageParams memory amp = params.deserializeAuthenticateMessageParams();
         //MarketTypes.DealProposal memory proposal = deserializeDealProposal(amp.message);
         //require(pieceToProposal[proposal.piece_cid.data].valid, "piece cid must be added before authorizing");
@@ -72,7 +73,8 @@ contract DealClientStorageRenewal is DealClient {
         bytes[] memory CIDs,
         uint64[] memory piece_sizes,
         string[] memory location_refs,
-        uint64[] memory car_sizes
+        uint64[] memory car_sizes,
+        string[] memory labels
     ) public returns (DealRequest[] memory) {
         //ensure all arrays have same length
         uint len = CIDs.length;
@@ -92,7 +94,8 @@ contract DealClientStorageRenewal is DealClient {
                 CIDs[i],
                 piece_sizes[i],
                 location_refs[i],
-                car_sizes[i]
+                car_sizes[i],
+                labels[i]
             );
         }
         return ret;
@@ -102,14 +105,15 @@ contract DealClientStorageRenewal is DealClient {
         bytes memory CID,
         uint64 piece_size,
         string memory location_ref,
-        uint64 car_size
+        uint64 car_size,
+        string memory labelCID
     ) public returns (DealRequest memory) {
         //possible todo: add label as an input
         DealRequest memory request = DealRequest({
             piece_cid: CID,
             piece_size: piece_size,
             verified_deal: VERIFIED_DEAL,
-            label: LABEL,
+            label: labelCID,
             start_epoch: START_EPOCH,
             end_epoch: END_EPOCH,
             storage_price_per_epoch: STORAGE_PRICE_PER_EPOCH,

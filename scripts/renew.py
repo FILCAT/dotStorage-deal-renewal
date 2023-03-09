@@ -11,7 +11,7 @@ import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0xF76774f6DB547BeeAdBcD63c8740896B3C421319"
+DealClientStorageRenewalAddress = "0xbc58b1F4BfC560F9ceB10E487A9c4B9d0ABE1d62"
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
@@ -63,7 +63,7 @@ def getCID(cid):
     #convert from [ 2 3 4 5] to [2,3,4,5] and parse with json.loads
     output = output.replace(" ", ",")
     ret_cid = bytes(json.loads(output))
-    ret_cid = bytes([0]) + ret_cid
+    #ret_cid = bytes([0]) + ret_cid
     print(''.join(format(x, '02x') for x in ret_cid))
     return ret_cid
 
@@ -72,9 +72,8 @@ def getTxInfo():
             'nonce': w3.eth.get_transaction_count(PA.address)}
 
 def sendTx(tx):
-    tx['maxPriorityFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
-    tx['maxFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
-    print(tx)
+    tx['maxPriorityFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
+    tx['maxFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
     tx_create = w3.eth.account.sign_transaction(tx, PA._private_key)
     tx_hash = w3.eth.send_raw_transaction(tx_create.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -143,19 +142,21 @@ def wait(blockNumber):
         time.sleep(1)
 
 def createDealRequests(cids, piece_sizes, location_refs, car_sizes):
+    labels = [cid for cid in cids ]
     CIDs = [getCID(cid) for cid in cids ]
     piece_sizes = [int(piece_size) for piece_size in piece_sizes ]
     car_sizes = [int(car_size) for car_size in car_sizes ]
     location_refs = [str(location_ref) for location_ref in location_refs]
     contract = getContract()
     tx_info = getTxInfo()
-    tx = contract.functions.createDealRequests(CIDs, piece_sizes, location_refs, car_sizes).build_transaction(tx_info)
+    tx = contract.functions.createDealRequests(CIDs, piece_sizes, location_refs, car_sizes, labels).build_transaction(tx_info)
     tx_receipt = sendTx(tx)
     wait(tx_receipt.blockNumber)
     return tx_receipt
 
 
 def createDealRequest(cid, piece_size, location_ref, car_size):
+    label = str(cid)
     CID = getCID(cid)
     print("cid ", cid)
     print("CID ", CID)
@@ -164,7 +165,7 @@ def createDealRequest(cid, piece_size, location_ref, car_size):
     location_ref = str(location_ref)
     contract = getContract()
     tx_info = getTxInfo()
-    tx = contract.functions.createDealRequest(CID, piece_size, location_ref, car_size).build_transaction(tx_info)
+    tx = contract.functions.createDealRequest(CID, piece_size, location_ref, car_size, label).build_transaction(tx_info)
     tx_receipt = sendTx(tx)
     wait(tx_receipt.blockNumber)
     return tx_receipt
