@@ -71,17 +71,6 @@ contract DealClientStorageRenewal is DealClient {
             isZero(proposal.client_collateral),
             "Client collateral incorrect"
         );
-
-        // Convert bytes to bytes32
-        bytes32 myCid32 = bytes32(proposal.piece_cid.data);
-        // Assert length is correct
-        assert(myCid32.length == 32);
-
-        ProposalIdx memory deal_index = dealProposals[myCid32];
-        require(deal_index.valid);
-        DealRequest memory deal = deals[deal_index.idx];
-        require(proposal.piece_size == deal.piece_size, "Piece size incorrect");
-        require(compareStrings(proposal.label, deal.label), "Label incorrect");
     }
 
     function isVerifiedSP(
