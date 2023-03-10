@@ -169,6 +169,17 @@ def createDealRequests(cids, piece_sizes, location_refs, car_sizes):
     wait(tx_receipt.blockNumber)
     return tx_receipt
 
+# byte representation of pieceCid
+def updateStatusRequest(pieceCid):
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx = contract.functions.updateActivationStatus(pieceCid).buildTransaction(tx_info)
+    tx_receipt = sendTx(tx)
+    wait(tx_receipt.blockNumber)
+    pieceStatus = contract.functions.pieceStatus(pieceCid).call()
+    dealId = contract.functions.pieceDeals(pieceCid).call()
+    return dealId, pieceStatus
+
 
 def createDealRequest(cid, piece_size, location_ref, car_size):
     label = str(cid)

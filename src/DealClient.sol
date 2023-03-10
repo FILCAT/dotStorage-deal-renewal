@@ -78,6 +78,14 @@ contract DealClient is Ownable {
     using AccountCBOR for *;
     using MarketCBOR for *;
 
+    enum Status {
+        None,
+        RequestSubmitted,
+        DealPublished,
+        DealActivated,
+        DealTerminated
+    }
+
     uint64 public constant AUTHENTICATE_MESSAGE_METHOD_NUM = 2643134072;
     uint64 public constant DATACAP_RECEIVER_HOOK_METHOD_NUM = 3726118371;
     uint64 public constant MARKET_NOTIFY_DEAL_METHOD_NUM = 4186741094;
@@ -90,6 +98,7 @@ contract DealClient is Ownable {
     mapping(bytes => ProposalIdSet) public pieceToProposal; // commP -> dealProposalID
     mapping(bytes => ProviderSet) public pieceProviders; // commP -> provider
     mapping(bytes => uint64) public pieceDeals; // commP -> deal ID
+    mapping(bytes => Status) public pieceStatus;
     DealRequest[] public deals;
 
     event ReceivedDataCap(string received);
@@ -137,6 +146,7 @@ contract DealClient is Ownable {
         dealProposals[id] = ProposalIdx(index, true);
 
         pieceToProposal[deal.piece_cid] = ProposalIdSet(id, true);
+        pieceStatus[deal.piece_cid] = Status.RequestSubmitted;
 
         // writes the proposal metadata to the event log
         emit DealProposalCreate(
@@ -254,6 +264,26 @@ contract DealClient is Ownable {
             true
         );
         pieceDeals[proposal.piece_cid.data] = mdnp.dealId;
+        pieceStatus[proposal.piece_cid.data] = Status.DealPublished;
+    }
+
+    // This function can be called/smartly polled to retrieve the deal activation status
+    // associated with provided pieceCid and update the contract state based on that
+    // info
+    // @pieceCid - byte representation of pieceCid
+    function updateActivationStatus(bytes memory pieceCid) public {
+        require(
+            pieceDeals[pieceCid] > 0,
+            "no deal published for this piece cid"
+        );
+
+        MarketTypes.GetDealActivationReturn memory ret = MarketAPI
+            .getDealActivation(pieceDeals[pieceCid]);
+        if (ret.terminated > 0) {
+            pieceStatus[pieceCid] = Status.DealTerminated;
+        } else if (ret.activated > 0) {
+            pieceStatus[pieceCid] = Status.DealActivated;
+        }
     }
 
     // addBalance funds the builtin storage market actor's escrow
