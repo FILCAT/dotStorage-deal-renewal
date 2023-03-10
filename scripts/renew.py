@@ -11,8 +11,12 @@ import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0x5972018edbecfff57f3f389146350f603d83fd72" # verified = true with some  data cap
-DealClientStorageRenewalAddress = Web3.to_checksum_address(DealClientStorageRenewalAddress)
+
+try:
+    DealClientStorageRenewalAddress = open("contract_address").read().strip()
+    DealClientStorageRenewalAddress = Web3.to_checksum_address(DealClientStorageRenewalAddress)
+except Exception:
+    raise(Exception("Run cli.py deploy or set a file named `contract_address` in the folder with the 0xstyle ethereum address of your contract"))
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
@@ -46,18 +50,22 @@ def listenEvents():
     wscontract = ContractFactory(DealClientStorageRenewalAddress)
     latest = w3.eth.get_block('latest').number 
     oldestBlock =  latest - 30480
-    event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock=oldestBlock, toBlock=latest)
+    event_filter = wscontract.events.AuthenticateMessageRequest().create_filter(fromBlock=oldestBlock, toBlock=latest)
     for event in event_filter.get_new_entries():
         handle_event(event)
-    event_filter = wscontract.events.DealProposalCreate().create_filter(fromBlock="latest")
+    event_filter = wscontract.events.AuthenticateMessageRequest().create_filter(fromBlock="latest")
+    print("HI")
     while True:
         for event in event_filter.get_new_entries():
             handle_event(event)
         time.sleep(1)
 
-def runCommand(cmd):    
+def runCommand(cmd):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     output = process.communicate()[0].decode('utf-8').strip()
+    return_code = process.returncode
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, cmd)
     return output
 
 def getCID(cid):
@@ -85,11 +93,14 @@ def sendTx(tx):
 
 
 def deploy():
+    runCommand(['forge', 'b'])
     DealClientStorageRenewal = w3.eth.contract(abi=abi, bytecode=bytecode)
     tx_info = getTxInfo()
     construct_txn = DealClientStorageRenewal.constructor().build_transaction(tx_info)
     tx_receipt = sendTx(construct_txn)
     print(f'Contract deployed at address: { tx_receipt.contractAddress.lower() }')
+    with open('contract_address', 'w') as writer:
+        writer.write(tx_receipt.contractAddress.lower())
 
 
 def getContract():

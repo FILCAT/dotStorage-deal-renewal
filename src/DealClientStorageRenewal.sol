@@ -14,7 +14,7 @@ contract DealClientStorageRenewal is DealClient {
     int64 public constant END_EPOCH = 700000;
     uint64 public constant STORAGE_PRICE_PER_EPOCH = 0;
     bool public constant VERIFIED_DEAL = true;
-    uint64[] DEFAULT_VERIFIED_SPS = [4, 5, 6];
+    uint64[] DEFAULT_VERIFIED_SPS = [1033, 1648];
 
     mapping(bytes => bool) public verifiedSPs;
 
@@ -43,20 +43,33 @@ contract DealClientStorageRenewal is DealClient {
     }
 
     function authenticateMessage(bytes memory params) internal view override {
-        super.authenticateMessage(params);
+        require(
+            msg.sender == MARKET_ACTOR_ETH_ADDRESS,
+            "msg.sender needs to be market actor f05"
+        );
+
         AccountTypes.AuthenticateMessageParams memory amp = params
             .deserializeAuthenticateMessageParams();
         MarketTypes.DealProposal memory proposal = deserializeDealProposal(
             amp.message
         );
-        //check for valid SPs
-        require(isVerifiedSP(proposal.provider));
+
+        bytes memory pieceCid = proposal.piece_cid.data;
+        require(
+            pieceToProposal[pieceCid].valid,
+            "piece cid must be added before authorizing"
+        );
+        require(
+            !pieceProviders[pieceCid].valid,
+            "deal failed policy check: provider already claimed this cid"
+        );
 
         //check deal params are correct
         require(
             VERIFIED_DEAL == proposal.verified_deal,
             "Deal verified incorrect"
         );
+
         require(proposal.start_epoch == START_EPOCH, "Start epoch incorrect");
         require(proposal.end_epoch == END_EPOCH, "End epoch incorrect");
         require(
@@ -71,6 +84,9 @@ contract DealClientStorageRenewal is DealClient {
             isZero(proposal.client_collateral),
             "Client collateral incorrect"
         );
+
+        //check for valid SPs
+        require(isVerifiedSP(proposal.provider), "SP not verified");
     }
 
     function isVerifiedSP(

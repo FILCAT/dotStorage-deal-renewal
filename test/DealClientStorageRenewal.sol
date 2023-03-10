@@ -102,22 +102,19 @@ contract DealClientStorageRenewalTest is Test {
     }
 
     function testDefaultActorIds() public {
-        require(dealClient.isVerifiedSP(4));
-        require(dealClient.isVerifiedSP(5));
-        require(dealClient.isVerifiedSP(6));
+        require(dealClient.isVerifiedSP(1033));
+        require(dealClient.isVerifiedSP(1648));
     }
 
     function testInvalidActorId(uint64 actorId) public {
-        vm.assume(actorId != 4);
-        vm.assume(actorId != 5);
-        vm.assume(actorId != 6);
+        vm.assume(actorId != 1033);
+        vm.assume(actorId != 1648);
         require(!dealClient.isVerifiedSP(actorId));
     }
 
     function testInvalidActorIdUint64(uint64 actorId) public {
-        vm.assume(actorId != 4);
-        vm.assume(actorId != 5);
-        vm.assume(actorId != 6);
+        vm.assume(actorId != 1033);
+        vm.assume(actorId != 1648);
         require(!dealClient.isVerifiedSP(actorId));
     }
 
