@@ -11,7 +11,8 @@ import os
 import time
 import uuid
 
-DealClientStorageRenewalAddress = "0x7F30bd7ABd4E55130Fd1c213f8192F661746FD31"
+DealClientStorageRenewalAddress = "0x5972018edbecfff57f3f389146350f603d83fd72" # verified = true with some  data cap
+DealClientStorageRenewalAddress = Web3.to_checksum_address(DealClientStorageRenewalAddress)
 
 w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
@@ -54,14 +55,16 @@ def listenEvents():
             handle_event(event)
         time.sleep(1)
 
-    
+def runCommand(cmd):    
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output = process.communicate()[0].decode('utf-8').strip()
+    return output
 
 def getCID(cid):
     #return bytes("bafk2bzaceanzppnlffioby4nac2hhjmrstzntqie3oid4ovq6zu4qhhjs4bvy", 'ascii')
     #return b'\x01\x81\xe2\x03\x92  \x05@\x88\xfbI\xe2/\xda7\xd3\t\rK\x17\xbe\x87\xae\xabp\xba\xc5\x8b=w\x95E\x12h\x11\x80=%'
     # Call the Go program to reverse the input string
-    process = subprocess.Popen(['./cidbytes', cid], stdout=subprocess.PIPE)
-    output = process.communicate()[0].decode('utf-8').strip()
+    output = runCommand(['go', 'run', 'cidbytes.go', cid])
     #convert from [ 2 3 4 5] to [2,3,4,5] and parse with json.loads
     output = output.replace(" ", ",")
     ret_cid = bytes(json.loads(output))
@@ -86,7 +89,7 @@ def deploy():
     tx_info = getTxInfo()
     construct_txn = DealClientStorageRenewal.constructor().build_transaction(tx_info)
     tx_receipt = sendTx(construct_txn)
-    print(f'Contract deployed at address: { tx_receipt.contractAddress }')
+    print(f'Contract deployed at address: { tx_receipt.contractAddress.lower() }')
 
 
 def getContract():
@@ -108,11 +111,10 @@ def submitcsvbatch(csv_filename):
         location_refs = []
         car_sizes = []
         for row in reader:
-            print(row)
             cids.append( row['piece_cid'])
             piece_sizes.append(  row['piece_size'])
             location_refs.append( row['signed_url'])
-            car_sizes.append(row.get("car_size", 0)) #TODO this is hard coded for now
+            car_sizes.append(row['car_size'])
         x = createDealRequests(cids, piece_sizes, location_refs, car_sizes)
         print(x)
 
@@ -124,7 +126,7 @@ def submitcsv(csv_filename):
             cid = row['piece_cid']
             piece_size = row['piece_size']
             location_ref = row['signed_url']
-            car_size = row.get("car_size", 0) #TODO this is hard coded for now
+            car_size = row['car_size']
             x = createDealRequest(cid, piece_size, location_ref, car_size)
             print(x)
 
