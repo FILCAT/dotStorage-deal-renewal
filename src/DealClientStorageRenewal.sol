@@ -3,70 +3,116 @@ pragma solidity ^0.8.17;
 
 import "./DealClient.sol";
 import {CommonTypes} from "@zondax/filecoin-solidity/contracts/v0.8/types/CommonTypes.sol";
+import {FilAddresses} from "@zondax/filecoin-solidity/contracts/v0.8/utils/FilAddresses.sol";
+import {MarketTypes} from "@zondax/filecoin-solidity/contracts/v0.8/types/MarketTypes.sol";
 
 contract DealClientStorageRenewal is DealClient {
+    using AccountCBOR for *;
+    using MarketCBOR for *;
+
     int64 public constant START_EPOCH = 180000;
     int64 public constant END_EPOCH = 700000;
     uint64 public constant STORAGE_PRICE_PER_EPOCH = 0;
     bool public constant VERIFIED_DEAL = true;
-    string public constant LABEL = "";
     uint64[] DEFAULT_VERIFIED_SPS = [4, 5, 6];
 
-    mapping(CommonTypes.FilActorId => bool) public verifiedSPs;
+    mapping(bytes => bool) public verifiedSPs;
 
     constructor() {
         setDefaultVerifiedSPs();
     }
 
-    function isVerifiedSPUint64(uint64 actorId) public view returns (bool) {
-        CommonTypes.FilActorId a = CommonTypes.FilActorId.wrap(actorId);
-        return isVerifiedSP(a);
+    function isZero(CommonTypes.BigInt memory a) internal pure returns (bool) {
+        CommonTypes.BigInt memory Zero = CommonTypes.BigInt(hex"00", false);
+        return compareBigInts(a, Zero);
+    }
+
+    function compareBigInts(
+        CommonTypes.BigInt memory a,
+        CommonTypes.BigInt memory b
+    ) internal pure returns (bool) {
+        return keccak256(a.val) == keccak256(b.val) && a.neg == b.neg;
+    }
+
+    function compareStrings(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked(a)) ==
+            keccak256(abi.encodePacked(b)));
+    }
+
+    function authenticateMessage(bytes memory params) internal view override {
+        super.authenticateMessage(params);
+        AccountTypes.AuthenticateMessageParams memory amp = params
+            .deserializeAuthenticateMessageParams();
+        MarketTypes.DealProposal memory proposal = deserializeDealProposal(
+            amp.message
+        );
+        //check for valid SPs
+        require(isVerifiedSP(proposal.provider));
+
+        //check deal params are correct
+        require(
+            VERIFIED_DEAL == proposal.verified_deal,
+            "Deal verified incorrect"
+        );
+        require(proposal.start_epoch == START_EPOCH, "Start epoch incorrect");
+        require(proposal.end_epoch == END_EPOCH, "End epoch incorrect");
+        require(
+            isZero(proposal.storage_price_per_epoch),
+            "Storage price incorrect"
+        );
+        require(
+            isZero(proposal.provider_collateral),
+            "Provider collateral incorrect"
+        );
+        require(
+            isZero(proposal.client_collateral),
+            "Client collateral incorrect"
+        );
+
+        // Convert bytes to bytes32
+        bytes32 myCid32 = bytes32(proposal.piece_cid.data);
+        // Assert length is correct
+        assert(myCid32.length == 32);
+
+        ProposalIdx memory deal_index = dealProposals[myCid32];
+        require(deal_index.valid);
+        DealRequest memory deal = deals[deal_index.idx];
+        require(proposal.piece_size == deal.piece_size, "Piece size incorrect");
+        require(compareStrings(proposal.label, deal.label), "Label incorrect");
     }
 
     function isVerifiedSP(
-        CommonTypes.FilActorId actorId
+        CommonTypes.FilAddress memory actor
     ) public view returns (bool) {
-        return verifiedSPs[actorId];
+        return verifiedSPs[actor.data];
     }
 
-    function addVerifiedSP(CommonTypes.FilActorId actorId) public onlyOwner {
-        verifiedSPs[actorId] = true;
+    function isVerifiedSP(uint64 actorId) public view returns (bool) {
+        return verifiedSPs[getBytes(actorId)];
     }
 
-    function deleteSP(CommonTypes.FilActorId _actorID) public onlyOwner {
-        require(verifiedSPs[_actorID] == true, "SP not found");
-        delete verifiedSPs[_actorID];
+    function getBytes(uint64 actorId) internal pure returns (bytes memory) {
+        CommonTypes.FilAddress memory a = FilAddresses.fromActorID(actorId);
+        return a.data;
+    }
+
+    function addVerifiedSP(uint64 actorId) public onlyOwner {
+        verifiedSPs[getBytes(actorId)] = true;
+    }
+
+    function deleteSP(uint64 _actorID) public onlyOwner {
+        require(verifiedSPs[getBytes(_actorID)] == true, "SP not found");
+        delete verifiedSPs[getBytes(_actorID)];
     }
 
     function setDefaultVerifiedSPs() internal {
         for (uint256 i = 0; i < DEFAULT_VERIFIED_SPS.length; i++) {
-            CommonTypes.FilActorId actorId = CommonTypes.FilActorId.wrap(
-                DEFAULT_VERIFIED_SPS[i]
-            );
+            uint64 actorId = DEFAULT_VERIFIED_SPS[i];
             addVerifiedSP(actorId);
         }
-    }
-
-    function authenticateMessage(bytes memory params) internal view override {
-        /*
-        bytes memory allowedParams = hex"deadbeaf"; // placeholder
-
-        require(
-            keccak256(params) == keccak256(allowedParams),
-            "params not correct"
-        ); // check place holder
-
-        //todo learn format of params and get actor id from params
-        CommonTypes.FilActorId params_actor_id = CommonTypes.FilActorId.wrap(5);
-        require(
-            isVerifiedSP(params_actor_id),
-            "Actor id is not a verified SP in this contract"
-        );
-*/
-        //AccountTypes.AuthenticateMessageParams memory amp = params.deserializeAuthenticateMessageParams();
-        //MarketTypes.DealProposal memory proposal = deserializeDealProposal(amp.message);
-        //require(pieceToProposal[proposal.piece_cid.data].valid, "piece cid must be added before authorizing");
-        //require(!pieceProviders[proposal.piece_cid.data].valid, "deal failed policy check: provider already claimed this cid");
     }
 
     function createDealRequests(

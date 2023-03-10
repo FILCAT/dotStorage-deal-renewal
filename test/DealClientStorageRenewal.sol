@@ -93,54 +93,37 @@ contract DealClientStorageRenewalTest is Test {
     function testDealClientConfigAuthenticateMessage() public {
         //todo add white list actor to allowedParams
         uint64 AUTHENTICATE_MESSAGE_METHOD_NUM = 2643134072;
+        vm.expectRevert(bytes("msg.sender needs to be market actor f05"));
         dealClient.handle_filecoin_method(
             AUTHENTICATE_MESSAGE_METHOD_NUM,
             0,
             allowedParams
         );
-
-        //fail case
-        //for dev ease now always pass
-        //vm.expectRevert(bytes("params not correct"));
-        dealClient.handle_filecoin_method(
-            AUTHENTICATE_MESSAGE_METHOD_NUM,
-            0,
-            allowedParamsFail
-        );
     }
 
     function testDefaultActorIds() public {
-        require(dealClient.isVerifiedSP(CommonTypes.FilActorId.wrap(4)));
-        require(dealClient.isVerifiedSP(CommonTypes.FilActorId.wrap(5)));
-        require(dealClient.isVerifiedSP(CommonTypes.FilActorId.wrap(6)));
+        require(dealClient.isVerifiedSP(4));
+        require(dealClient.isVerifiedSP(5));
+        require(dealClient.isVerifiedSP(6));
     }
 
     function testInvalidActorId(uint64 actorId) public {
         vm.assume(actorId != 4);
         vm.assume(actorId != 5);
         vm.assume(actorId != 6);
-        require(!dealClient.isVerifiedSP(CommonTypes.FilActorId.wrap(actorId)));
-    }
-
-    function testDefaultActorIdsUint64() public {
-        uint64 x = 4;
-        require(dealClient.isVerifiedSPUint64(x));
-        require(dealClient.isVerifiedSPUint64(x + 1));
-        require(dealClient.isVerifiedSPUint64(x + 2));
+        require(!dealClient.isVerifiedSP(actorId));
     }
 
     function testInvalidActorIdUint64(uint64 actorId) public {
         vm.assume(actorId != 4);
         vm.assume(actorId != 5);
         vm.assume(actorId != 6);
-        require(!dealClient.isVerifiedSPUint64(actorId));
+        require(!dealClient.isVerifiedSP(actorId));
     }
 
     function testAddRemoveActorIds() public {
-        CommonTypes.FilActorId actorId = CommonTypes.FilActorId.wrap(1111);
-        CommonTypes.FilActorId actorIdInvalid = CommonTypes.FilActorId.wrap(
-            9999
-        );
+        uint64 actorId = 1111;
+        uint64 actorIdInvalid = 9999;
 
         //neither actor id added
         require(!dealClient.isVerifiedSP(actorId));
