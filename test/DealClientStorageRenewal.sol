@@ -118,6 +118,29 @@ contract DealClientStorageRenewalTest is Test {
         require(!dealClient.isVerifiedSP(actorId));
     }
 
+    function testAddRemoveActorIdsBatch() public {
+        uint64[] memory actorIds = new uint64[](2);
+        actorIds[0] = 1111;
+        actorIds[1] = 1112;
+        uint64 actorIdInvalid = 9999;
+
+        //neither actor id added
+        require(!dealClient.isVerifiedSP(actorIds[0]));
+        require(!dealClient.isVerifiedSP(actorIds[1]));
+        require(!dealClient.isVerifiedSP(actorIdInvalid));
+
+        dealClient.addVerifiedSPs(actorIds);
+        require(dealClient.isVerifiedSP(actorIds[0]));
+        require(dealClient.isVerifiedSP(actorIds[1]));
+        require(!dealClient.isVerifiedSP(actorIdInvalid));
+
+        dealClient.deleteSP(actorIds[0]);
+        dealClient.deleteSP(actorIds[1]);
+        require(!dealClient.isVerifiedSP(actorIds[0]));
+        require(!dealClient.isVerifiedSP(actorIds[1]));
+        require(!dealClient.isVerifiedSP(actorIdInvalid));
+    }
+
     function testAddRemoveActorIds() public {
         uint64 actorId = 1111;
         uint64 actorIdInvalid = 9999;
