@@ -108,6 +108,12 @@ contract DealClientStorageRenewal is DealClient {
         verifiedSPs[getBytes(actorId)] = true;
     }
 
+    function addVerifiedSPs(uint64[] memory minerIds) public onlyOwner {
+        for (uint i = 0; i < minerIds.length; i++) {
+            addVerifiedSP(minerIds[i]);
+        }
+    }
+
     function deleteSP(uint64 _actorID) public onlyOwner {
         require(verifiedSPs[getBytes(_actorID)] == true, "SP not found");
         delete verifiedSPs[getBytes(_actorID)];

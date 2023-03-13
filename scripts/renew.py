@@ -10,6 +10,7 @@ import json
 import os
 import time
 import uuid
+from collections import defaultdict
 
 
 try:
@@ -77,7 +78,7 @@ def getCID(cid):
     output = output.replace(" ", ",")
     ret_cid = bytes(json.loads(output))
     #ret_cid = bytes([0]) + ret_cid
-    print(''.join(format(x, '02x') for x in ret_cid))
+    # print(''.join(format(x, '02x') for x in ret_cid))
     return ret_cid
 
 def getTxInfo():
@@ -140,6 +141,21 @@ def submitcsv(csv_filename):
             car_size = row['car_size']
             x = createDealRequest(cid, piece_size, location_ref, car_size)
             print(x)
+
+
+def checkPieceStatus(csv_filename):
+    status_count = defaultdict(int)
+    with open(csv_filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        contract = getContract()
+        for row in reader:
+            cid = row['piece_cid']
+            pieceCid = getCID(cid)
+            status = contract.functions.pieceStatus(pieceCid).call()
+            print(cid, status)
+            status_count[status] += 1
+    print(status_count)
+
 
 def testVerified():
     is_v = isVerified(5)
@@ -214,7 +230,19 @@ def addVerifiedSP(actor_id):
     print("wait for confirmations")
     wait(tx_receipt.blockNumber)
     return True
-    
+
+
+def addVerifiedSPs(miner_ids):
+    ids = [int(id) for id in miner_ids.split(',')]
+    print(ids)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.addVerifiedSPs(ids).build_transaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
+
+
 def testAddRandomSP():
     actor_id = uuid.uuid1().int>>64
     print("Creating new actor", actor_id)
