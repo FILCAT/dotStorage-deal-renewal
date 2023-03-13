@@ -108,6 +108,23 @@ def getContract():
     contract = ContractFactory(DealClientStorageRenewalAddress)
     return contract
 
+def getDealsInfo():
+    data  = {}
+    totalDeals = getDealCount()
+    data['TotalDeals'] =  totalDeals
+    data['deals'] = []
+    for i in range(totalDeals):
+        data['deals'].append(getInfoByIndex(i))
+    return data
+    
+
+def getInfoByIndex(index):
+    index = int(index)
+    contract = getContract()
+    deal = contract.functions.getDealByIndex(index).call()
+    cid = deal[0]
+    return { "piece_cid": deal[3], "providerSet": getProviderSet(cid), "proposalIdSet" : getProviderSet(cid) }
+
 def getDealByIndex(index):
     index = int(index)
     contract = getContract()
@@ -194,8 +211,6 @@ def updateStatusRequest(cid):
 def createDealRequest(cid, piece_size, location_ref, car_size):
     label = str(cid)
     CID = getCID(cid)
-    print("cid ", cid)
-    print("CID ", CID)
     piece_size = int(piece_size)
     car_size = int(car_size)
     location_ref = str(location_ref)
@@ -205,6 +220,16 @@ def createDealRequest(cid, piece_size, location_ref, car_size):
     tx_receipt = sendTx(tx)
     wait(tx_receipt.blockNumber)
     return tx_receipt
+
+def getProviderSet(cid):
+    contract = getContract()
+    return {"valid": contract.functions.getProviderSet(cid).call()[1]}
+
+def getProposalIdSet(cid):
+    contract = getContract()
+    return {"valid": contract.functions.getProposalIdSet(cid).call()[1]}
+
+
 
 def deleteSP(actor_id):
     actor_id = int(actor_id)
