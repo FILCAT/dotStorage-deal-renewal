@@ -108,6 +108,15 @@ def getContract():
     contract = ContractFactory(DealClientStorageRenewalAddress)
     return contract
 
+def getDealByIndex(index):
+    index = int(index)
+    contract = getContract()
+    return contract.functions.getDealByIndex(index).call()
+
+def getDealCount():
+    contract = getContract()
+    return contract.functions.dealsLength().call()
+
 def isVerified(actorid):
     actorid = int(actorid)
     contract = getContract()
