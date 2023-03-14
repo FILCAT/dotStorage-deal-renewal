@@ -12,18 +12,24 @@ import os
 import time
 import uuid
 from collections import defaultdict
+import logging
 
 
 try:
     DealClientStorageRenewalAddress = open("contract_address").read().strip()
     DealClientStorageRenewalAddress = Web3.to_checksum_address(DealClientStorageRenewalAddress)
+    # print("contract address: ", DealClientStorageRenewalAddress)
 except Exception:
     raise(Exception("Run cli.py deploy or set a file named `contract_address` in the folder with the 0xstyle ethereum address of your contract"))
 
-w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
+# w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
+w3 = Web3(Web3.HTTPProvider('https://api.node.glif.io/'))
+# w3 = Web3(Web3.HTTPProvider('https://www.ankr.com/rpc/filecoin/'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
 
-w3wss_url = 'wss://wss.hyperspace.node.glif.io/apigw/lotus/rpc/v1'
+# w3wss_url = 'wss://wss.hyperspace.node.glif.io/apigw/lotus/rpc/v1'
+# w3wss_url = 'wss://wss.node.glif.io/apigw/lotus/rpc/v0'
+
 
 try:
     abi = json.load(open(abi_json))['abi']
@@ -33,7 +39,7 @@ except Exception:
     raise
 
 PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
-
+print(PA.address)
 curBlock = w3.eth.get_block('latest')
 
 def getDeal():
@@ -87,8 +93,8 @@ def getTxInfo():
             'nonce': w3.eth.get_transaction_count(PA.address)}
 
 def sendTx(tx):
-    tx['maxPriorityFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
-    tx['maxFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
+    tx['maxPriorityFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
+    tx['maxFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
     tx_create = w3.eth.account.sign_transaction(tx, PA._private_key)
     tx_hash = w3.eth.send_raw_transaction(tx_create.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -183,6 +189,15 @@ def checkPieceStatus(csv_filename):
             print(cid, status)
             status_count[status] += 1
     print(status_count)
+
+def changeMinProviderCollateral(newmin):
+    newmin = int(newmin)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.changeMINPROVIDERCOLLATERAL(newmin).build_transaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
 
 
 def testVerified():
