@@ -9,7 +9,7 @@ import {MarketTypes} from "@zondax/filecoin-solidity/contracts/v0.8/types/Market
 contract DealClientStorageRenewal is DealClient {
     using AccountCBOR for *;
     using MarketCBOR for *;
-    
+
     // 2023-03-25 00:00:00 UTC
     int64 public constant START_EPOCH = 2713200;
     // 2713200 + 539 * 2880
@@ -18,6 +18,7 @@ contract DealClientStorageRenewal is DealClient {
     bool public constant VERIFIED_DEAL = true;
     uint64[] DEFAULT_VERIFIED_SPS = [1036, 1648];
 
+    uint256 MIN_PROVIDER_COLLATERAL = 15000000000000000;
     mapping(bytes => bool) public verifiedSPs;
 
     constructor() {
