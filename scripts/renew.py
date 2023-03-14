@@ -20,10 +20,10 @@ try:
 except Exception:
     raise(Exception("Run cli.py deploy or set a file named `contract_address` in the folder with the 0xstyle ethereum address of your contract"))
 
-w3 = Web3(Web3.HTTPProvider('https://api.hyperspace.node.glif.io/rpc/v1'))
+w3 = Web3(Web3.HTTPProvider('https://api.node.glif.io/rpc/v1'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
 
-w3wss_url = 'wss://wss.hyperspace.node.glif.io/apigw/lotus/rpc/v1'
+w3wss_url = 'wss://wss.node.glif.io/apigw/lotus/rpc/v0'
 
 try:
     abi = json.load(open(abi_json))['abi']
