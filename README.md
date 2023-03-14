@@ -16,4 +16,5 @@ Follow [@nftdotstorage on Twitter](https://twitter.com/NFTdotStorage) to show yo
 
 ## Contact us
 You can find us easily at the Filecoin Slack workspace(filecoin.io/slack) - [#deal-client-contract](https://filecoinproject.slack.com/archives/CP50PPW2X)
+
 Follow us [@lotus_web3](0x4b65dc6db1097faefc881c5e530ad3ce9959fac7)
