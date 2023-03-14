@@ -18,7 +18,7 @@ contract DealClientStorageRenewal is DealClient {
     bool public constant VERIFIED_DEAL = true;
     uint64[] DEFAULT_VERIFIED_SPS = [1036, 1648];
 
-    uint256 MIN_PROVIDER_COLLATERAL = 12000000000000000;
+    uint256 MIN_PROVIDER_COLLATERAL = 15000000000000000;
 
     mapping(bytes => bool) public verifiedSPs;
 
