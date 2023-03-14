@@ -4,6 +4,7 @@ import binascii
 import subprocess
 from cid import make_cid
 import csv
+import leb128
 import time
 import sys
 import json
@@ -123,7 +124,8 @@ def getInfoByIndex(index):
     contract = getContract()
     deal = contract.functions.getDealByIndex(index).call()
     cid = deal[0]
-    return { "piece_cid": deal[3], "providerSet": getProviderSet(cid), "proposalIdSet" : getProviderSet(cid) }
+    dealId = contract.functions.pieceDeals(cid).call()
+    return { "piece_cid": deal[3], "providerSet": getProviderSet(cid), "proposalIdSet" : getProposalIdSet(cid), "dealId": dealId }
 
 def getDealByIndex(index):
     index = int(index)
@@ -223,7 +225,9 @@ def createDealRequest(cid, piece_size, location_ref, car_size):
 
 def getProviderSet(cid):
     contract = getContract()
-    return {"valid": contract.functions.getProviderSet(cid).call()[1]}
+    provider = contract.functions.getProviderSet(cid).call()
+    minerId = leb128.u.decode(provider[0][1:])
+    return {"valid": contract.functions.getProviderSet(cid).call()[1], "minerId": minerId}
 
 def getProposalIdSet(cid):
     contract = getContract()
