@@ -2,8 +2,10 @@
 import instantcli
 import renew
 import json
+from pprint import pprint
+
 def printme(result):
-    print(result)
+    pprint(result)
 
 instantcli.post_call = printme
 
