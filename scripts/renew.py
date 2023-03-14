@@ -36,6 +36,9 @@ PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
 
 curBlock = w3.eth.get_block('latest')
 
+def getOwner():
+    return getContract().functions.owner().call()
+
 def getDeal():
     _id = b"\x05\xe3\xaf\x994\x10'\x9a\xc5\xe5\xaf+\xc6\t\xbf\x11\xf2\xc7\xdfZ\x89mW\x9c5\x03LBn\xc6\xe2\x19"
     print( getContract().functions.getDealRequestPub(_id).call())
@@ -87,8 +90,8 @@ def getTxInfo():
             'nonce': w3.eth.get_transaction_count(PA.address)}
 
 def sendTx(tx):
-    tx['maxPriorityFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
-    tx['maxFeePerGas'] = 200000 #max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
+    tx['maxPriorityFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
+    tx['maxFeePerGas'] = max(tx['maxPriorityFeePerGas'], tx['maxFeePerGas']) # intermittently fails otherwise
     tx_create = w3.eth.account.sign_transaction(tx, PA._private_key)
     tx_hash = w3.eth.send_raw_transaction(tx_create.rawTransaction)
     return w3.eth.wait_for_transaction_receipt(tx_hash)
