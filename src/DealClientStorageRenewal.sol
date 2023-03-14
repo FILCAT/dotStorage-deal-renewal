@@ -12,13 +12,14 @@ contract DealClientStorageRenewal is DealClient {
 
     // 2023-03-25 00:00:00 UTC
     int64 public constant START_EPOCH = 2713200;
-    // 2713200 + 539 * 2880
-    int64 public constant END_EPOCH = 4265520;
+    // 2713200 + 500 * 2880
+    int64 public constant END_EPOCH = 4153200;
     uint64 public constant STORAGE_PRICE_PER_EPOCH = 0;
     bool public constant VERIFIED_DEAL = true;
     uint64[] DEFAULT_VERIFIED_SPS = [1036, 1648];
 
     uint256 MIN_PROVIDER_COLLATERAL = 15000000000000000;
+
     mapping(bytes => bool) public verifiedSPs;
 
     constructor() {
@@ -80,7 +81,8 @@ contract DealClientStorageRenewal is DealClient {
             "Storage price incorrect"
         );
         require(
-            isZero(proposal.provider_collateral),
+            bigIntToUint(proposal.provider_collateral) ==
+                MIN_PROVIDER_COLLATERAL,
             "Provider collateral incorrect"
         );
         require(
@@ -105,6 +107,10 @@ contract DealClientStorageRenewal is DealClient {
     function getBytes(uint64 actorId) internal pure returns (bytes memory) {
         CommonTypes.FilAddress memory a = FilAddresses.fromActorID(actorId);
         return a.data;
+    }
+
+    function changeMINPROVIDERCOLLATERAL(uint256 min) public onlyOwner {
+        MIN_PROVIDER_COLLATERAL = min;
     }
 
     function addVerifiedSP(uint64 actorId) public onlyOwner {
@@ -177,7 +183,7 @@ contract DealClientStorageRenewal is DealClient {
             start_epoch: START_EPOCH,
             end_epoch: END_EPOCH,
             storage_price_per_epoch: STORAGE_PRICE_PER_EPOCH,
-            provider_collateral: 0,
+            provider_collateral: MIN_PROVIDER_COLLATERAL,
             client_collateral: 0,
             extra_params_version: 0,
             extra_params: ExtraParamsV1({
