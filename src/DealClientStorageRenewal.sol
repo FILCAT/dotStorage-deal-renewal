@@ -16,9 +16,9 @@ contract DealClientStorageRenewal is DealClient {
     int64 public constant END_EPOCH = 4153200;
     uint64 public constant STORAGE_PRICE_PER_EPOCH = 0;
     bool public constant VERIFIED_DEAL = true;
-    uint64[] DEFAULT_VERIFIED_SPS = [1036, 1648];
+    uint64[] DEFAULT_VERIFIED_SPS = [8403, 22352];
 
-    uint256 MIN_PROVIDER_COLLATERAL = 15000000000000000;
+    uint256 MIN_PROVIDER_COLLATERAL = 1525127388837;
 
     mapping(bytes => bool) public verifiedSPs;
 

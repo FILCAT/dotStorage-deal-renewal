@@ -263,6 +263,15 @@ def deleteSP(actor_id):
     wait(tx_receipt.blockNumber)
     return True
 
+def changeMinProviderCollateral(newmin):
+    newmin = int(newmin)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.changeMINPROVIDERCOLLATERAL(newmin).build_transaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
+
 def addVerifiedSP(actor_id):
     actor_id = int(actor_id)
     contract = getContract()
