@@ -33,6 +33,9 @@ except Exception:
 PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
 curBlock = w3.eth.get_block('latest')
 
+def getOwner():
+    return getContract().functions.owner().call()
+
 def getDeal():
     _id = b"\x05\xe3\xaf\x994\x10'\x9a\xc5\xe5\xaf+\xc6\t\xbf\x11\xf2\xc7\xdfZ\x89mW\x9c5\x03LBn\xc6\xe2\x19"
     print( getContract().functions.getDealRequestPub(_id).call())
