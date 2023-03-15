@@ -101,22 +101,22 @@ contract DealClientStorageRenewalTest is Test {
         );
     }
 
-    //    function testDefaultActorIds() public {
-    //        require(dealClient.isVerifiedSP(1036));
-    //        require(dealClient.isVerifiedSP(1648));
-    //    }
-    //
-    //    function testInvalidActorId(uint64 actorId) public {
-    //        vm.assume(actorId != 1036);
-    //        vm.assume(actorId != 1648);
-    //        require(!dealClient.isVerifiedSP(actorId));
-    //    }
-    //
-    //    function testInvalidActorIdUint64(uint64 actorId) public {
-    //        vm.assume(actorId != 1036);
-    //        vm.assume(actorId != 1648);
-    //        require(!dealClient.isVerifiedSP(actorId));
-    //    }
+    function testDefaultActorIds() public {
+        require(dealClient.isVerifiedSP(8403));
+        require(dealClient.isVerifiedSP(22352));
+    }
+
+    function testInvalidActorId(uint64 actorId) public {
+        vm.assume(actorId != 8403);
+        vm.assume(actorId != 22352);
+        require(!dealClient.isVerifiedSP(actorId));
+    }
+
+    function testInvalidActorIdUint64(uint64 actorId) public {
+        vm.assume(actorId != 8403);
+        vm.assume(actorId != 22352);
+        require(!dealClient.isVerifiedSP(actorId));
+    }
 
     function testAddRemoveActorIdsBatch() public {
         uint64[] memory actorIds = new uint64[](2);
