@@ -20,10 +20,8 @@ try:
 except Exception:
     raise(Exception("Run cli.py deploy or set a file named `contract_address` in the folder with the 0xstyle ethereum address of your contract"))
 
-w3 = Web3(Web3.HTTPProvider('https://api.node.glif.io/rpc/v1'))
+w3 = Web3(Web3.HTTPProvider('https://api.node.glif.io/'))
 abi_json = "../out/DealClientStorageRenewal.sol/DealClientStorageRenewal.json"
-
-w3wss_url = 'wss://wss.node.glif.io/apigw/lotus/rpc/v0'
 
 try:
     abi = json.load(open(abi_json))['abi']
@@ -33,7 +31,6 @@ except Exception:
     raise
 
 PA=w3.eth.account.from_key(os.environ['PRIVATE_KEY'])
-
 curBlock = w3.eth.get_block('latest')
 
 def getOwner():
@@ -186,6 +183,15 @@ def checkPieceStatus(csv_filename):
             print(cid, status)
             status_count[status] += 1
     print(status_count)
+
+def changeMinProviderCollateral(newmin):
+    newmin = int(newmin)
+    contract = getContract()
+    tx_info = getTxInfo()
+    tx_receipt = sendTx(contract.functions.changeMINPROVIDERCOLLATERAL(newmin).build_transaction(tx_info))
+    print("wait for confirmations")
+    wait(tx_receipt.blockNumber)
+    return True
 
 
 def testVerified():
